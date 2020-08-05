@@ -1,5 +1,3 @@
-WORK_DIR=`mktemp -d`
-
 pip --no-cache-dir --no-cache install \
         Cython \
         matplotlib \
@@ -22,19 +20,3 @@ pip --no-cache-dir --no-cache install \
 pip --no-cache-dir --no-cache install \
     'git+https://github.com/NVIDIA/dllogger'
 
-# Uninstall older TensorFlow version
-pip uninstall -y tensorflow-gpu
-
-#Install TF
-pip install tensorflow-gpu==1.14
-
-export PATH=/opt/amazon/openmpi/bin:$PATH
-export LD_LIBRARY_PATH=/opt/amazon/openmpi/lib:$LD_LIBRARY_PATH
-
-# Install Herring for TensorFlow
-cd $WORK_DIR
-tar -xzf $HERRING_HOME/herring.tar.gz -C .
-cd herring
-HERRING_TF=1 python setup.py install
-
-rm -rf $WORK_DIR
