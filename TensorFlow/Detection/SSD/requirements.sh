@@ -6,5 +6,5 @@ pip install Pillow
 pip install matplotlib
 pip install numpy==1.17.5 --upgrade
 
-cd /shared/DeepLearningExamplesKaran/TensorFlow/Detection/SSD/models/research
+cd /shared/DeepLearningExamples/TensorFlow/Detection/SSD/models/research
 protoc object_detection/protos/*.proto --python_out=.
