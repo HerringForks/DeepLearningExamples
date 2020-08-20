@@ -30,7 +30,7 @@
 """Functions to build DetectionModel training optimizers."""
 
 import tensorflow as tf
-import horovod.tensorflow as hvd
+import herring.tensorflow as hvd
 from object_detection.utils import learning_schedules
 
 

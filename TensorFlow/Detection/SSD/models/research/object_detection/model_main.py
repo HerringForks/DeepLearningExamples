@@ -35,7 +35,7 @@ from __future__ import print_function
 from absl import flags
 
 import tensorflow as tf
-import horovod.tensorflow as hvd
+import herring.tensorflow as hvd
 import dllogger
 import time
 import os
@@ -76,6 +76,8 @@ flags.DEFINE_boolean(
 flags.DEFINE_boolean(
     'amp', False, 'Whether to enable AMP ops. When false, uses TF32 on A100 and FP32 on V100 GPUS.')
 flags.DEFINE_boolean(
+    'train_only', False, 'Just run the training (No evaluation)')
+flags.DEFINE_boolean(
     'run_once', False, 'If running in eval-only mode, whether to run just '
     'one round of eval vs running continuously (default).'
 )
@@ -88,6 +90,7 @@ class DLLoggerHook(tf.estimator.SessionRunHook):
     setup_dllogger(enabled=True, filename=FLAGS.raport_file, rank=rank)
 
   def after_create_session(self, session, coord):
+    self.t1 = time.time()
     self.meters = {}
     warmup = 100
     self.meters['train_throughput'] = AverageMeter(warmup=warmup)
@@ -106,7 +109,9 @@ class DLLoggerHook(tf.estimator.SessionRunHook):
       'train_throughput': self.meters['train_throughput'].avg,
     }
     dllogger.log(step=tuple(), data=summary)
-
+    if self.rank == 0:
+      print("Average Throughput: {} samples/sec".format(self.meters['train_throughput'].avg))
+      print("Total Training time: {} secs".format(time.time() - self.t1))
 
 
 def main(unused_argv):
@@ -116,7 +121,7 @@ def main(unused_argv):
   else:
       os.environ["TF_ENABLE_AUTO_MIXED_PRECISION"] = "0"
 
-  hvd.init()
+  # hvd.init()
 
   flags.mark_flag_as_required('model_dir')
   flags.mark_flag_as_required('pipeline_config_path')
@@ -169,7 +174,7 @@ def main(unused_argv):
         train_steps,
         eval_on_train_data=False)
 
-    train_hooks = [hvd.BroadcastGlobalVariablesHook(0), DLLoggerHook(hvd.size()*train_and_eval_dict['train_batch_size'], hvd.rank())]
+    train_hooks = [hvd.BroadcastGlobalVariablesHook(root=0), DLLoggerHook(hvd.size()*train_and_eval_dict['train_batch_size'], hvd.rank())]
     eval_hooks = []
 
     for x in range(FLAGS.eval_count):
@@ -178,7 +183,7 @@ def main(unused_argv):
                         steps=train_steps // FLAGS.eval_count)
 
 
-        if hvd.rank() == 0:
+        if hvd.rank() == 0 and not FLAGS.train_only:
             eval_input_fn = eval_input_fns[0]
             results = estimator.evaluate(eval_input_fn,
                                steps=None,

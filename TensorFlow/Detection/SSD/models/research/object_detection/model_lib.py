@@ -37,7 +37,7 @@ import functools
 import os
 
 import tensorflow as tf
-import horovod.tensorflow as hvd
+import herring.tensorflow as hvd
 
 from object_detection import eval_util
 from object_detection import exporter as exporter_lib
@@ -702,7 +702,7 @@ def create_train_and_eval_specs(train_input_fn,
   train_spec = tf.estimator.TrainSpec(
       input_fn=train_input_fn,
       max_steps=train_steps // hvd.size(), # no `steps' attribute; only max_steps available
-      hooks=[hvd.BroadcastGlobalVariablesHook(0)])
+      hooks=[hvd.BroadcastGlobalVariablesHook(root=0)])
 
   if eval_spec_names is None:
     eval_spec_names = [str(i) for i in range(len(eval_input_fns))]
