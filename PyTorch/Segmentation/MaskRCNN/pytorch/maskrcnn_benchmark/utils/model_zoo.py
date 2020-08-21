@@ -38,7 +38,7 @@ def cache_url(url, model_dir=None, progress=True):
         torch_home = os.path.expanduser(os.getenv('TORCH_HOME', '~/.torch'))
         model_dir = os.getenv('TORCH_MODEL_ZOO', os.path.join(torch_home, 'models'))
     if not os.path.exists(model_dir) and is_main_process():
-        os.makedirs(model_dir)
+        os.makedirs(model_dir, exist_ok=True)
     parts = urlparse(url)
     filename = os.path.basename(parts.path)
     if filename == "model_final.pkl":
