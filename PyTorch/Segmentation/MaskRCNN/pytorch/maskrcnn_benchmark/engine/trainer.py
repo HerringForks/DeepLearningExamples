@@ -153,3 +153,4 @@ def do_train(
             total_time_str, sec_per_iteration, samples_per_sec
         )
     )
+    logger.info("Final Loss at iteration {}: {}".format(max_iter, str(meters)))
