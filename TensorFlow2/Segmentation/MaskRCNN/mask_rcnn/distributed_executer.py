@@ -481,7 +481,7 @@ class EstimatorExecuter(BaseExecuter):
       os.environ['HOROVOD_NUM_NCCL_STREAMS'] = '1'
       # os.environ['HOROVOD_AUTOTUNE'] = '2'
 
-      # hvd.init()
+      hvd.init()
 
       logging.info("Herring successfully initialized ...")
 
