@@ -554,7 +554,7 @@ def main(_):
 
   if FLAGS.herring:
     import herring.tensorflow as hvd
-    # hvd.init()
+    hvd.init()
 
   bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
 
