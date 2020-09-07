@@ -56,6 +56,10 @@ class TrainingLoggingHook(tf.train.SessionRunHook):
         self.t0 = None
 
         self.mean_throughput = MeanAccumulator()
+        self.train_time = 0
+
+    def after_create_session(self, session, coord):
+        self.t1 = time.time()
 
     # Determines if its the last step of the epoch
     def _last_step_of_epoch(self, global_step):
@@ -104,6 +108,9 @@ class TrainingLoggingHook(tf.train.SessionRunHook):
             metrics = {k: float(v) for k, v in metrics.items()}
             dllogger.log(data=metrics, step=(int(global_step // self.steps_per_epoch), ))
             self.current_epoch += 1
+
+    def end(self, session):
+        self.train_time = time.time() - self.t1
 
 
 class TrainingPartitionHook(tf.train.SessionRunHook):

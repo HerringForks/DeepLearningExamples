@@ -22,11 +22,11 @@ import os
 
 import tensorflow as tf
 
-import horovod.tensorflow as hvd
+import herring.tensorflow as hvd
 from model import resnet
 
 tf.app.flags.DEFINE_string(
-    'model_name', 'resnet50', 'The name of the architecture to save. The default name was being ' 
+    'model_name', 'resnet50', 'The name of the architecture to save. The default name was being '
      'used to train the model')
 
 tf.app.flags.DEFINE_integer(
@@ -75,7 +75,7 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def main(_):
-  
+
   # Initialize Horovod (TODO: Remove dependency of horovod for freezing graphs)
   hvd.init()
 
@@ -89,9 +89,9 @@ def main(_):
     else:
         input_shape = [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3]
     input_images = tf.placeholder(name='input', dtype=tf.float32, shape=input_shape)
-    
+
     resnet50_config = resnet.model_architectures[FLAGS.model_name]
-    network = resnet.ResnetModel(FLAGS.model_name, 
+    network = resnet.ResnetModel(FLAGS.model_name,
                                  FLAGS.num_classes,
                                  resnet50_config['layers'],
                                  resnet50_config['widths'],
@@ -103,9 +103,9 @@ def main(_):
                 training=False,
                 reuse=False,
                 use_final_conv=FLAGS.use_final_conv)
-    
+
     if FLAGS.quantize:
-        tf.contrib.quantize.experimental_create_eval_graph(symmetric=FLAGS.symmetric, 
+        tf.contrib.quantize.experimental_create_eval_graph(symmetric=FLAGS.symmetric,
                                                            use_qdq=FLAGS.use_qdq)
 
     # Define the saver and restore the checkpoint

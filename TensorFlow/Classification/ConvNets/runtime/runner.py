@@ -21,7 +21,7 @@ import warnings
 import tensorflow as tf
 import numpy as np
 
-import horovod.tensorflow as hvd
+import herring.tensorflow as hvd
 
 from model import resnet
 
@@ -420,7 +420,7 @@ class Runner(object):
             training_hooks.append(self.training_logging_hook)
 
         if hvd_utils.is_using_hvd():
-            bcast_hook = hvd.BroadcastGlobalVariablesHook(0)
+            bcast_hook = hvd.BroadcastGlobalVariablesHook(root=0)
             training_hooks.append(bcast_hook)
 
         training_hooks.append(hooks.PrefillStagingAreasHook())
@@ -525,7 +525,9 @@ class Runner(object):
             if run_iter > 0:
                 print('Ending Model Training ...')
                 train_throughput = self.training_logging_hook.mean_throughput.value()
+                train_time = self.training_logging_hook.train_time
                 dllogger.log(data={'train_throughput': train_throughput}, step=tuple())
+                dllogger.log(data={'Total Training time': train_time}, step=tuple())
             else:
                 print('Model already trained required number of steps. Skipped')
 

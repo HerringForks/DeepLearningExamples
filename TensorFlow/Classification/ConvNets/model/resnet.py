@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-import horovod.tensorflow as hvd
+import herring.tensorflow as hvd
 import dllogger
 
 from model import layers
