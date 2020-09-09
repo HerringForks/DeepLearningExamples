@@ -26,6 +26,8 @@ import modeling
 import optimization
 import tensorflow as tf
 import glob
+import numpy as np
+import random
 from utils.utils import LogEvalRunHook
 import utils.dllogger_class
 from dllogger import Verbosity
@@ -122,6 +124,7 @@ flags.DEFINE_bool("manual_fp16", False, "Whether to use fp32 or fp16 arithmetic 
 flags.DEFINE_bool("amp", True, "Whether to enable AMP ops. When false, uses TF32 on A100 and FP32 on V100 GPUS.")
 flags.DEFINE_bool("use_xla", True, "Whether to enable XLA JIT compilation.")
 flags.DEFINE_integer("init_loss_scale", 2**32, "Initial value of loss scale if mixed precision training")
+flags.DEFINE_integer('seed', default=None, help='Set a debug seed for reproducibility.')
 
 # report samples/sec, total loss and learning rate during training
 class _LogSessionRunHook(tf.estimator.SessionRunHook):
@@ -551,6 +554,11 @@ def main(_):
 
   if not FLAGS.do_train and not FLAGS.do_eval:
     raise ValueError("At least one of `do_train` or `do_eval` must be True.")
+
+  # Set seed to reduce randomness
+  random.seed(FLAGS.seed)
+  np.random.seed(FLAGS.seed)
+  tf.set_random_seed(FLAGS.seed)
 
   if FLAGS.herring:
     import herring.tensorflow as hvd

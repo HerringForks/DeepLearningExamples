@@ -39,6 +39,7 @@ import herring.tensorflow as hvd
 import dllogger
 import time
 import os
+import numpy as np
 
 from object_detection import model_hparams
 from object_detection import model_lib
@@ -81,6 +82,7 @@ flags.DEFINE_boolean(
     'run_once', False, 'If running in eval-only mode, whether to run just '
     'one round of eval vs running continuously (default).'
 )
+flags.DEFINE_integer('seed', default=None, help='Set a debug seed for reproducibility.')
 FLAGS = flags.FLAGS
 
 class DLLoggerHook(tf.estimator.SessionRunHook):
@@ -120,6 +122,10 @@ def main(unused_argv):
       os.environ["TF_ENABLE_AUTO_MIXED_PRECISION"] = "1"
   else:
       os.environ["TF_ENABLE_AUTO_MIXED_PRECISION"] = "0"
+
+  # Set seed to reduce randomness
+  np.random.seed(FLAGS.seed)
+  tf.set_random_seed(FLAGS.seed)
 
   hvd.init()
 
