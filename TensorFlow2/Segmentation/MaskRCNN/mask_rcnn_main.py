@@ -22,7 +22,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import numpy as np
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 os.environ["TF_CPP_VMODULE"] = 'non_max_suppression_op=0,generate_box_proposals_op=0,executor=0'
@@ -112,9 +111,6 @@ def main(argv):
     dllogger.init(backends=[dllogger.JSONStreamBackend(verbosity=dllogger.Verbosity.VERBOSE,
                                                            filename=RUN_CONFIG.log_path)])
 
-    # Set seed to reduce randomness
-    np.random.seed(FLAGS.seed)
-    tf.set_random_seed(RUN_CONFIG.seed)
 
     if RUN_CONFIG.mode in ('train', 'train_and_eval'):
 

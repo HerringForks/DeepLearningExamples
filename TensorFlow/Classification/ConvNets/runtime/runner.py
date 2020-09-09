@@ -175,7 +175,6 @@ class Runner(object):
         )
 
         if self.run_hparams.seed is not None:
-            np.random.seed(self.run_hparams.seed)
             tf.set_random_seed(self.run_hparams.seed)
 
         self.training_logging_hook = None
