@@ -249,8 +249,6 @@ def main():
     np.random.seed(args.seed + herring.get_local_rank())
     torch.manual_seed(args.seed + herring.get_local_rank())
     torch.cuda.manual_seed(args.seed + herring.get_local_rank())
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
     # num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     num_gpus = herring.get_world_size()

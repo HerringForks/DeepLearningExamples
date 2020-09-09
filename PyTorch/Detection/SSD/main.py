@@ -153,8 +153,6 @@ def train(train_loop_func, logger, args):
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
     np.random.seed(seed=args.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
 
     # Setup data, defaults
