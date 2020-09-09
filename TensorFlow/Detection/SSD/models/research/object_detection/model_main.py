@@ -121,7 +121,6 @@ def main(unused_argv):
   else:
       os.environ["TF_ENABLE_AUTO_MIXED_PRECISION"] = "0"
 
-
   hvd.init()
 
   flags.mark_flag_as_required('model_dir')

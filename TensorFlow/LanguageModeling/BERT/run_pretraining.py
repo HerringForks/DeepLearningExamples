@@ -552,7 +552,6 @@ def main(_):
   if not FLAGS.do_train and not FLAGS.do_eval:
     raise ValueError("At least one of `do_train` or `do_eval` must be True.")
 
-
   if FLAGS.herring:
     import herring.tensorflow as hvd
     hvd.init()
