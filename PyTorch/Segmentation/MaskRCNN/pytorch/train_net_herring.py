@@ -209,6 +209,12 @@ def main():
     )
     parser.add_argument("--local_rank", type=int, default=herring.get_local_rank())
     parser.add_argument(
+        "--seed",
+        help="manually set random seed for torch",
+        type=int,
+        default=99
+    )
+    parser.add_argument(
         "--skip-test",
         dest="skip_test",
         help="Do not test the final model",
@@ -234,11 +240,7 @@ def main():
         type=str,
         default=None
     )
-    parser.add_argument('--seed',
-                        '-s',
-                        help='manually set random seed for torch',
-                        type=int,
-                        default=99)
+
 
     args = parser.parse_args()
 
@@ -247,6 +249,8 @@ def main():
     np.random.seed(args.seed + herring.get_local_rank())
     torch.manual_seed(args.seed + herring.get_local_rank())
     torch.cuda.manual_seed(args.seed + herring.get_local_rank())
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     # num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     num_gpus = herring.get_world_size()
