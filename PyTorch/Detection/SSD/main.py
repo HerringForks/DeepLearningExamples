@@ -151,6 +151,7 @@ def train(train_loop_func, logger, args):
         args.seed = (args.seed + herring.get_rank()) % 2 ** 32
     print("Using seed = {}".format(args.seed))
     torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
     np.random.seed(seed=args.seed)
 
 

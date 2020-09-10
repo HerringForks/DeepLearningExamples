@@ -112,6 +112,7 @@ def main(argv):
     dllogger.init(backends=[dllogger.JSONStreamBackend(verbosity=dllogger.Verbosity.VERBOSE,
                                                            filename=RUN_CONFIG.log_path)])
 
+
     # Set seed to reduce randomness
     np.random.seed(RUN_CONFIG.seed)
     tf.set_random_seed(RUN_CONFIG.seed)
