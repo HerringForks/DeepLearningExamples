@@ -639,7 +639,8 @@ def create_estimator_and_inputs(run_config,
   tf.logging.info('create_estimator_and_inputs: use_tpu %s, export_to_tpu %s',
                   use_tpu, export_to_tpu)
   model_fn = model_fn_creator(detection_model_fn, configs, hparams, use_tpu)
-  run_config = tf.estimator.RunConfig(model_dir=run_config.model_dir,
+  run_config = tf.estimator.RunConfig(tf_random_seed=run_config.tf_random_seed,
+                                      model_dir=run_config.model_dir,
                                       session_config=run_config.session_config,
                                       save_checkpoints_steps=train_steps // eval_count)
   if use_tpu_estimator:
