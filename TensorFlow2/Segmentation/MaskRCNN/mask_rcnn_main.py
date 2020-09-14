@@ -48,6 +48,8 @@ from mask_rcnn.hyperparameters.cmdline_utils import define_hparams_flags
 from mask_rcnn.utils.logging_formatter import log_cleaning
 import dllogger
 
+from distutils.version import LooseVersion
+
 FLAGS = define_hparams_flags()
 
 
@@ -115,7 +117,10 @@ def main(argv):
 
     # Set seed to reduce randomness
     np.random.seed(RUN_CONFIG.seed)
-    tf.set_random_seed(RUN_CONFIG.seed)
+    if LooseVersion(tf.__version__) < LooseVersion("2.0.0"):
+        tf.set_random_seed(RUN_CONFIG.seed)
+    else:
+        tf.random.set_seed(RUN_CONFIG.seed)
 
     if RUN_CONFIG.mode in ('train', 'train_and_eval'):
 
