@@ -113,7 +113,7 @@ def train(cfg, args):
         # if use_apex_ddp:
         #     model = DDP(model, delay_allreduce=True)
         # else:
-        model = DDP(model, device_ids=[herring.get_local_rank()], bucket_cap_mb=args.bucket_cap_mb)
+        model = DDP(model, device_ids=[herring.get_local_rank()], broadcast_buffers=False, bucket_cap_mb=args.bucket_cap_mb)
         #model = DDP(model)
     print("model parameter size: ", sum(p.numel() for p in model.parameters() if p.requires_grad))
     arguments = {}
