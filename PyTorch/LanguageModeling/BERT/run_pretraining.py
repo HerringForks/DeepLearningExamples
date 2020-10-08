@@ -410,7 +410,7 @@ def prepare_model_and_optimizer(args, device):
                 checkpoint['optimizer']['param_groups'][iter]['lr'] = args.learning_rate
         optimizer.load_state_dict(checkpoint['optimizer'])  # , strict=False)
 
-        # Restore AMP master parameters          
+        # Restore AMP master parameters
         if args.fp16:
             optimizer._lazy_init_maybe_master_weights()
             optimizer._amp_stash.lazy_init_called = True
@@ -421,7 +421,7 @@ def prepare_model_and_optimizer(args, device):
     if args.local_rank != -1:
         if not args.allreduce_post_accumulation:
             # model = DDP(model, message_size=250000000, gradient_predivide_factor=get_world_size())
-            model = DDP(model)
+            model = DDP(model, gradient_accumulation_steps=args.gradient_accumulation_steps)
         else:
             flat_dist_call([param.data for param in model.parameters()], herring.broadcast, (0,) )
     elif args.n_gpu > 1:
@@ -659,7 +659,7 @@ def main():
                                     ckpt_to_be_removed = most_recent_ckpts_paths.pop(0)
                                     os.remove(ckpt_to_be_removed)
 
-                        # Exiting the training due to hitting max steps, or being sent a 
+                        # Exiting the training due to hitting max steps, or being sent a
                         # timeout from the cluster scheduler
                         if global_step >= args.steps_this_run or timeout_sent:
                             del train_dataloader
