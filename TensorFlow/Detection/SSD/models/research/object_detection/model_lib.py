@@ -703,7 +703,7 @@ def create_train_and_eval_specs(train_input_fn,
   train_spec = tf.estimator.TrainSpec(
       input_fn=train_input_fn,
       max_steps=train_steps // hvd.size(), # no `steps' attribute; only max_steps available
-      hooks=[hvd.BroadcastGlobalVariablesHook(root=0)])
+      hooks=[hvd.BroadcastGlobalVariablesHook(0)])
 
   if eval_spec_names is None:
     eval_spec_names = [str(i) for i in range(len(eval_input_fns))]

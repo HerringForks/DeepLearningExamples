@@ -421,7 +421,7 @@ class Runner(object):
             training_hooks.append(self.training_logging_hook)
 
         if hvd_utils.is_using_hvd():
-            bcast_hook = hvd.BroadcastGlobalVariablesHook(root=0)
+            bcast_hook = hvd.BroadcastGlobalVariablesHook(0)
             training_hooks.append(bcast_hook)
 
         training_hooks.append(hooks.PrefillStagingAreasHook())
@@ -447,10 +447,10 @@ class Runner(object):
             'symmetric': symmetric,
             'quant_delay': quant_delay
         }
-        
+
         if finetune_checkpoint:
            estimator_params['finetune_checkpoint']=finetune_checkpoint
-        
+
         image_classifier = self._get_estimator(
             mode='train',
             run_params=estimator_params,

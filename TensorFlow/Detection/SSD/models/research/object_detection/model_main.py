@@ -181,7 +181,7 @@ def main(unused_argv):
         train_steps,
         eval_on_train_data=False)
 
-    train_hooks = [hvd.BroadcastGlobalVariablesHook(root=0), DLLoggerHook(hvd.size()*train_and_eval_dict['train_batch_size'], hvd.rank())]
+    train_hooks = [hvd.BroadcastGlobalVariablesHook(0), DLLoggerHook(hvd.size()*train_and_eval_dict['train_batch_size'], hvd.rank())]
     eval_hooks = []
 
     for x in range(FLAGS.eval_count):
