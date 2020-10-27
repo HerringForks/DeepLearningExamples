@@ -57,8 +57,11 @@ def do_train(
     per_iter_end_callback_fn=None,
 ):
     dllogger.log(step="PARAMETER", data={"train_start": True})
+    logger = logging.getLogger("maskrcnn_benchmark.trainer")
+    logger.info("Start training")
     meters = MetricLogger(delimiter="  ")
     max_iter = len(data_loader)
+    print("max_iter: ", max_iter)
     start_iter = arguments["iteration"]
     model.train()
     start_training_time = time.time()
@@ -83,7 +86,7 @@ def do_train(
 
         # Note: If mixed precision is not used, this ends up doing nothing
         # Otherwise apply loss scaling for mixed-precision recipe
-        if use_amp:        
+        if use_amp:
             with amp.scale_loss(losses, optimizer) as scaled_losses:
                 scaled_losses.backward()
         else:
@@ -101,7 +104,7 @@ def do_train(
                 optimizer.step()
                 scheduler.step()
                 optimizer.zero_grad()
-            
+
         batch_time = time.time() - end
         end = time.time()
         meters.update(time=batch_time, data=data_time)
@@ -110,16 +113,31 @@ def do_train(
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
 
         if iteration % 20 == 0 or iteration == max_iter:
-            log_data = {"eta":eta_string, "learning_rate":optimizer.param_groups[0]["lr"],
-                        "memory": torch.cuda.max_memory_allocated() / 1024.0 / 1024.0 }
-            log_data.update(meters.get_dict())
-            dllogger.log(step=(iteration,), data=log_data)
-
-        if cfg.SAVE_CHECKPOINT:
-            if iteration % checkpoint_period == 0:
-                checkpointer.save("model_{:07d}".format(iteration), **arguments)
-            if iteration == max_iter:
-                checkpointer.save("model_final", **arguments)
+            logger.info(
+                meters.delimiter.join(
+                    [
+                        "eta: {eta}",
+                        "avg iteration time(s): {avg_iter:.2f}",
+                        "avg iter/s: {iter_s:.2f}",
+                        "iter: {iter}",
+                        "{meters}",
+                        "lr: {lr:.6f}",
+                        "max mem: {memory:.0f}",
+                    ]
+                ).format(
+                    eta=eta_string,
+                    avg_iter=meters.time.global_avg,
+                    iter_s = 1.0/meters.time.global_avg,
+                    iter=iteration,
+                    meters=str(meters),
+                    lr=optimizer.param_groups[0]["lr"],
+                    memory=torch.cuda.max_memory_allocated() / 1024.0 / 1024.0,
+                )
+            )
+        if iteration % checkpoint_period == 0:
+            checkpointer.save("model_{:07d}".format(iteration), **arguments)
+        if iteration == max_iter:
+            checkpointer.save("model_final", **arguments)
 
         # per-epoch work (testing)
         if per_iter_end_callback_fn is not None:
@@ -132,9 +150,12 @@ def do_train(
     dllogger.log(step=tuple(), data={"e2e_train_time": total_training_time,
                                                    "train_perf_fps": max_iter * cfg.SOLVER.IMS_PER_BATCH / total_training_time})
     logger = logging.getLogger("maskrcnn_benchmark.trainer")
+    sec_per_iteration = total_training_time / max_iter
+    samples_per_sec = int(cfg.SOLVER.IMS_PER_BATCH) / sec_per_iteration
     logger.info(
-    "Total training time: {} ({:.4f} s / it)".format(
-        total_time_str, total_training_time / (max_iter)
+        "Total training time: {} ({:.4f} s / it) throughput: {:.2f} FPS".format(
+            total_time_str, sec_per_iteration, samples_per_sec
         )
     )
+    logger.info("Final Loss at iteration {}: {}".format(max_iter, str(meters)))
 

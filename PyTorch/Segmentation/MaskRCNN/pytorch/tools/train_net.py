@@ -90,7 +90,7 @@ def mlperf_test_early_exit(iteration, iters_per_epoch, tester, model, distribute
     return False
 
 
-def train(cfg, local_rank, distributed, fp16, dllogger):
+def train(cfg, local_rank, distributed, fp16, dllogger, data_dir):
     model = build_detection_model(cfg)
     device = torch.device(cfg.MODEL.DEVICE)
     model.to(device)
@@ -115,8 +115,7 @@ def train(cfg, local_rank, distributed, fp16, dllogger):
             model = torch.nn.parallel.DistributedDataParallel(
                 model, device_ids=[local_rank], output_device=local_rank,
                 # this should be removed if we update BatchNorm stats
-                broadcast_buffers=False,
-            )
+                broadcast_buffers=False)
 
     arguments = {}
     arguments["iteration"] = 0
@@ -135,6 +134,7 @@ def train(cfg, local_rank, distributed, fp16, dllogger):
         is_train=True,
         is_distributed=distributed,
         start_iter=arguments["iteration"],
+        data_dir = data_dir,
     )
 
     checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
@@ -201,7 +201,7 @@ def test_model(cfg, model, distributed, iters_per_epoch, dllogger):
         )
         synchronize()
         results.append(result)
-    if is_main_process(): 
+    if is_main_process():
         map_results, raw_results = results[0]
         bbox_map = map_results.results["bbox"]['AP']
         segm_map = map_results.results["segm"]['AP']
@@ -235,9 +235,22 @@ def main():
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument(
+        "--data-dir",
+        dest="data_dir",
+        help="Absolute path of dataset ",
+        type=str,
+        default=None
+    )
+    parser.add_argument(
+        "--seed",
+        help="manually set random seed for torch",
+        type=int,
+        default=99
+    )
     args = parser.parse_args()
     args.fp16 = args.fp16 or args.amp
-    
+
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.distributed = num_gpus > 1
 
@@ -257,7 +270,7 @@ def main():
 
     if args.skip_checkpoint:
         cfg.SAVE_CHECKPOINT = False
-        
+
     cfg.freeze()
 
     output_dir = cfg.OUTPUT_DIR
@@ -280,13 +293,13 @@ def main():
         config_str = "\n" + cf.read()
 
     dllogger.log(step="PARAMETER", data={"config":cfg})
-    
+
     if args.fp16:
         fp16 = True
     else:
         fp16 = False
 
-    model, iters_per_epoch = train(cfg, args.local_rank, args.distributed, fp16, dllogger)
+    model, iters_per_epoch = train(cfg, args.local_rank, args.distributed, fp16, dllogger, args.data_dir)
 
     if not args.skip_test:
         if not cfg.PER_EPOCH_EVAL:
