@@ -11,6 +11,7 @@ import herring.torch as herring
 from maskrcnn_benchmark.utils.metric_logger import MetricLogger
 
 from herring.torch import get_world_size
+from herring.torch import get_rank
 
 try:
     from apex import amp
@@ -110,7 +111,7 @@ def do_train(
         eta_seconds = meters.time.global_avg * (max_iter - iteration)
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
 
-        if iteration % 20 == 0 or iteration == max_iter:
+        if get_rank() == 0 and (iteration % 20 == 0 or iteration == max_iter):
             logger.info(
                 meters.delimiter.join(
                     [
