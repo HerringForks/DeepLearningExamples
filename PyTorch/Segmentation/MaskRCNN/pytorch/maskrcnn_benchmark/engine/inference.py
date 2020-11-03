@@ -10,10 +10,11 @@ import torch
 from tqdm import tqdm
 
 from maskrcnn_benchmark.data.datasets.evaluation import evaluate
-from ..utils.comm import is_main_process
 from ..utils.comm import all_gather
-from ..utils.comm import synchronize
+import herring.torch.distributed as dist
 
+def is_main_process():
+    return dist.get_rank() == 0
 
 def compute_on_dataset(model, data_loader, device):
     model.eval()
@@ -69,19 +70,17 @@ def inference(
     # convert to a torch.device for efficiency
     device = torch.device(device)
     num_devices = (
-        torch.distributed.get_world_size()
-        if torch.distributed.is_initialized()
+        dist.get_world_size()
+        if dist.is_initialized()
         else 1
     )
     dataset = data_loader.dataset
-    dllogger.log(step="PARAMETER", data={"eval_dataset_name": dataset_name, "eval_num_samples":len(dataset)})
     start_time = time.time()
     predictions = compute_on_dataset(model, data_loader, device)
     # wait for all processes to complete before measuring the time
-    synchronize()
+    dist.barrier()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=total_time))
-    dllogger.log(step=tuple(), data={"e2e_infer_time": total_time, "inference_perf_fps": len(dataset) / total_time})
     logger = logging.getLogger("maskrcnn_benchmark.inference")
     logger.info(
     "Total inference time: {} ({} s / img per device, on {} devices)".format(
@@ -98,7 +97,6 @@ def inference(
         torch.save(predictions, os.path.join(output_folder, "predictions.pth"))
 
     if skip_eval:
-        dllogger.log(step="PARAMETER", data={"skip_eval":True, "predictions_saved_path":os.path.join(output_folder, "predictions.pth")})
         return
         
     extra_args = dict(
