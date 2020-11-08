@@ -8,7 +8,7 @@ import pickle
 import time
 
 import torch
-import herring.torch.distributed as dist
+import torch.distributed as dist
 
 
 def get_world_size():
