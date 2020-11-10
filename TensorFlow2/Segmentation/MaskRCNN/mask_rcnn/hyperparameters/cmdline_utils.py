@@ -50,7 +50,7 @@ def define_hparams_flags():
 
     flags.DEFINE_bool(
         'eval_after_training',
-        default=True,
+        default=False,
         help='Run one eval after the training finishes.'
     )
 
