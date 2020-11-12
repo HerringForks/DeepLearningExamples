@@ -38,7 +38,7 @@ try:
     from apex.parallel.LARC import LARC
     from apex import amp
     # from apex.parallel import DistributedDataParallel as DDP
-    from herring.torch.parallel import DistributedDataParallel as DDP
+    from smdistributed.dataparallel.torch.parallel import DistributedDataParallel as DDP
     from apex.fp16_utils import *
 except ImportError:
     raise ImportError("Please install APEX from https://github.com/nvidia/apex")

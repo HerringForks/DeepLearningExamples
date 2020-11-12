@@ -19,7 +19,7 @@ import torch
 import smdistributed.dataparallel.torch.distributed as herring
 if not herring.is_initialized():
     herring.init_process_group()
-from herring.torch.parallel import DistributedDataParallel as DDP
+from smdistributed.dataparallel.torch.parallel import DistributedDataParallel as DDP
 
 from maskrcnn_benchmark.config import cfg
 from maskrcnn_benchmark.data import make_data_loader

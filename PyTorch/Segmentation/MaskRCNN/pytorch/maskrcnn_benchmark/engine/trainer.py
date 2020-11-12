@@ -12,7 +12,7 @@ if not herring.is_initialized():
 #from maskrcnn_benchmark.utils.comm import get_world_size
 from maskrcnn_benchmark.utils.metric_logger import MetricLogger
 
-from herring.torch.distributed import get_world_size
+from smdistributed.dataparallel.torch.distributed import get_world_size
 
 try:
     from apex import amp

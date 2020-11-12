@@ -49,7 +49,7 @@ import smdistributed.dataparallel.torch.distributed as herring
 if not herring.is_initialized():
     herring.init_process_group()
 
-from herring.torch.parallel import DistributedDataParallel as DDP
+from smdistributed.dataparallel.torch.parallel import DistributedDataParallel as DDP
 from schedulers import LinearWarmUpScheduler
 from apex.parallel.distributed import flat_dist_call
 import amp_C
