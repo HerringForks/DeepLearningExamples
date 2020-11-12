@@ -49,7 +49,7 @@ from mask_rcnn.utils.meters import StandardMeter
 from mask_rcnn.utils.metric_tracking import register_metric
 
 from mask_rcnn.utils.lazy_imports import LazyImport
-hvd = LazyImport("herring.tensorflow")
+hvd = LazyImport("smdistributed.dataparallel.tensorflow")
 
 MODELS = dict()
 
