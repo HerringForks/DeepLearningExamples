@@ -561,7 +561,7 @@ def main(_):
   tf.set_random_seed(FLAGS.seed)
 
   if FLAGS.herring:
-    import herring.tensorflow as hvd
+    import smdistributed.dataparallel.tensorflow as hvd
     hvd.init()
 
   bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)

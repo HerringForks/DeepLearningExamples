@@ -22,6 +22,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import smdistributed.dataparallel.tensorflow as hr
 
 __all__ = ["RPN_Head_Model", "Box_Head_Model", "Mask_Head_Model"]
 
@@ -265,10 +266,13 @@ class Mask_Head_Model(tf.keras.Model):
 
         for conv_id in range(4):
             net = self._conv_stage1[conv_id](net)
+            net = hr.overlap(net)
 
         net = self._conv_stage2(net)
+        net = hr.overlap(net)
 
         mask_outputs = self._conv_stage3(net)
+        mask_outputs = hr.overlap(mask_outputs)
 
         mask_outputs = tf.reshape(
             mask_outputs,

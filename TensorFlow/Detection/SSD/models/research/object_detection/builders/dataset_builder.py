@@ -37,7 +37,7 @@ that wraps the build function.
 """
 import functools
 import tensorflow as tf
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 
 from object_detection.data_decoders import tf_example_decoder
 from object_detection.protos import input_reader_pb2

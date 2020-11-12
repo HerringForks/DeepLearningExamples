@@ -22,7 +22,7 @@ warnings.simplefilter("ignore")
 
 import tensorflow as tf
 
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 import dllogger
 
 from utils import hvd_utils

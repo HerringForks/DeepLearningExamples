@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 
 
 def is_using_hvd():

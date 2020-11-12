@@ -22,7 +22,7 @@ import os
 
 import tensorflow as tf
 
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 from model import resnet
 
 tf.app.flags.DEFINE_string(

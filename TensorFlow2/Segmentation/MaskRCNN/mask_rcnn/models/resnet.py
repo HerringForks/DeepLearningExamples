@@ -26,6 +26,7 @@ from tensorflow.python.ops import variable_scope
 from tensorflow.python.keras import backend
 
 from mask_rcnn.models.keras_utils import KerasMockLayer
+import smdistributed.dataparallel.tensorflow as hr
 
 _BATCH_NORM_DECAY = 0.997
 _BATCH_NORM_EPSILON = 1e-4
@@ -261,6 +262,7 @@ class ResidualBlock(KerasMockLayer):
 
         for i in range(1, 3):
             net = self._local_layers["conv2d_%d" % i](inputs=net)
+            net = hr.overlap(net)
 
             net = self._local_layers["batchnorm_%d" % i](
                 inputs=net,
@@ -384,6 +386,7 @@ class BottleneckBlock(KerasMockLayer):
 
         for i in range(1, 4):
             net = self._local_layers["conv2d_%d" % i](inputs=net)
+            net = hr.overlap(net)
 
             net = self._local_layers["batchnorm_%d" % i](
                 inputs=net,
@@ -551,6 +554,7 @@ class Resnet_Model(KerasMockLayer, tf.keras.models.Model):
     def call(self, inputs, training=True, *args, **kwargs):
         """Creation of the model graph."""
         net = self._local_layers["conv2d"](inputs=inputs)
+        net = hr.overlap(net)
 
         net = self._local_layers["batchnorm"](
             inputs=net,
@@ -563,20 +567,24 @@ class Resnet_Model(KerasMockLayer, tf.keras.models.Model):
             inputs=net,
             training=False,
         )
+        c2 = hr.overlap(c2)
 
         c3 = self._local_layers["block_2"](
             inputs=c2,
             training=training,
         )
+        c3 = hr.overlap(c3)
 
         c4 = self._local_layers["block_3"](
             inputs=c3,
             training=training,
         )
+        c4 = hr.overlap(c4)
 
         c5 = self._local_layers["block_4"](
             inputs=c4,
             training=training,
         )
+        c5 = hr.overlap(c5)
 
         return {2: c2, 3: c3, 4: c4, 5: c5}
