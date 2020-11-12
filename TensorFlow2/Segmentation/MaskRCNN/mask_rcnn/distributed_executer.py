@@ -31,6 +31,9 @@ import multiprocessing
 
 import tensorflow as tf
 import herring.tensorflow as hvd
+import herringcommon as hc
+bucket_cap_bytes = int(64 * 1024 * 1024)
+hc.setBucketSize(bucket_cap_bytes) # TODO : Change to obfuscate herringcommon. This code does not use GradientTape, so need to pass it like this.
 hvd.init()
 
 from mask_rcnn.utils.logging_formatter import logging
