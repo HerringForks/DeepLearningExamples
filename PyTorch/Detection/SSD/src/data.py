@@ -23,7 +23,7 @@ from src.coco import COCO
 #DALI import
 from src.coco_pipeline import COCOPipeline, DALICOCOIterator
 
-import herring.torch.distributed as herring
+import smdistributed.dataparallel.torch.distributed as herring
 if not herring.is_initialized():
     herring.init_process_group()
 

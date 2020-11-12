@@ -18,7 +18,7 @@
 import sys
 
 import tensorflow as tf
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 
 from utils import image_processing
 from utils import hvd_utils

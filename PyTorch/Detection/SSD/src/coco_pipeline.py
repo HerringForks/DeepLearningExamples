@@ -28,7 +28,7 @@ import nvidia.dali.types as types
 
 import time
 
-import herring.torch.distributed as herring
+import smdistributed.dataparallel.torch.distributed as herring
 if not herring.is_initialized():
     herring.init_process_group()
 

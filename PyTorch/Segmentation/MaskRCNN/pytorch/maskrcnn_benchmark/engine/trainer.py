@@ -6,7 +6,7 @@ import time
 
 import torch
 import torch.distributed as dist
-import herring.torch.distributed as herring
+import smdistributed.dataparallel.torch.distributed as herring
 if not herring.is_initialized():
     herring.init_process_group()
 #from maskrcnn_benchmark.utils.comm import get_world_size

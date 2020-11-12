@@ -35,7 +35,7 @@ from __future__ import print_function
 from absl import flags
 
 import tensorflow as tf
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 import dllogger
 import time
 import os

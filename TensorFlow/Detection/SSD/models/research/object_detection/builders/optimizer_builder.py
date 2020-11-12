@@ -30,7 +30,7 @@
 """Functions to build DetectionModel training optimizers."""
 
 import tensorflow as tf
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 from object_detection.utils import learning_schedules
 
 

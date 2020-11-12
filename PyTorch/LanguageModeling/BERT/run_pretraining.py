@@ -45,7 +45,7 @@ from schedulers import PolyWarmUpScheduler
 from file_utils import PYTORCH_PRETRAINED_BERT_CACHE
 from utils import is_main_process, format_step, get_world_size, get_rank
 #from apex.parallel import DistributedDataParallel as DDP
-import herring.torch.distributed as herring
+import smdistributed.dataparallel.torch.distributed as herring
 if not herring.is_initialized():
     herring.init_process_group()
 

@@ -30,7 +30,7 @@ import math
 import multiprocessing
 
 import tensorflow as tf
-import herring.tensorflow as hvd
+import smdistributed.dataparallel.tensorflow as hvd
 hvd.init()
 
 from mask_rcnn.utils.logging_formatter import logging

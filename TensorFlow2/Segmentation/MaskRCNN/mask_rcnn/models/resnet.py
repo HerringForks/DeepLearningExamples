@@ -26,7 +26,7 @@ from tensorflow.python.ops import variable_scope
 from tensorflow.python.keras import backend
 
 from mask_rcnn.models.keras_utils import KerasMockLayer
-import herring.tensorflow as hr
+import smdistributed.dataparallel.tensorflow as hr
 
 _BATCH_NORM_DECAY = 0.997
 _BATCH_NORM_EPSILON = 1e-4

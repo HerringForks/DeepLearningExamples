@@ -22,7 +22,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-import herring.tensorflow as hr
+import smdistributed.dataparallel.tensorflow as hr
 
 __all__ = ["RPN_Head_Model", "Box_Head_Model", "Mask_Head_Model"]
 
