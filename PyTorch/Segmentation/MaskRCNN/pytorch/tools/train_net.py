@@ -11,6 +11,8 @@ import argparse
 import os
 import logging
 import functools
+import random
+import numpy as np
 
 import torch
 from maskrcnn_benchmark.config import cfg
@@ -249,6 +251,14 @@ def main():
         default=99
     )
     args = parser.parse_args()
+
+    # Set seed to reduce randomness
+    print("Seed: {}\tLocal Rank: {}".format(args.seed, args.local_rank))
+    random.seed(args.seed + args.local_rank)
+    np.random.seed(args.seed + args.local_rank)
+    torch.manual_seed(args.seed + args.local_rank)
+    torch.cuda.manual_seed(args.seed + args.local_rank)
+
     args.fp16 = args.fp16 or args.amp
 
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
