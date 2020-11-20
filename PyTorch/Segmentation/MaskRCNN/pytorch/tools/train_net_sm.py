@@ -17,7 +17,8 @@ def main():
         type=str,
     )
     parser.add_argument("--local_rank", type=int, default=os.getenv('LOCAL_RANK', 0))
-    parser.add_argument("--num-nodes", dest="num_nodes", type=int, help="Number of worker nodes")
+    parser.add_argument("--num_nodes", type=int, help="Number of worker nodes")
+    parser.add_argument("--dtype", type=str, help="Data type")
     parser.add_argument("--max_steps", type=int, default=0,
                         help="Override number of training steps in the config")
     parser.add_argument("--skip-test", dest="skip_test", help="Do not test the final model",
