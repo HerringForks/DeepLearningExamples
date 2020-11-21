@@ -59,8 +59,6 @@ def main():
     current_host = os.environ["SM_CURRENT_HOST"]
     rank = hosts.index(current_host)
     work_dir = os.environ['SM_OUTPUT_DATA_DIR']
-    os.environ['PYTHONPATH'] = os.path.abspath(
-        os.path.dirname(os.path.dirname(__file__))) + os.pathsep + os.environ['PYTHONPATH']
 
     data_dir = "/opt/ml/input/data/train/"
 
