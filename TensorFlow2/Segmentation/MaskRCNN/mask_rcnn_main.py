@@ -20,17 +20,23 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
+from distutils.version import LooseVersion
+import tensorflow as tf
+_PRE_TF_2_4_0 = LooseVersion(tf.__version__) < LooseVersion('2.4.0')
 import os
 import numpy as np
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 os.environ["TF_CPP_VMODULE"] = 'non_max_suppression_op=0,generate_box_proposals_op=0,executor=0'
 # os.environ["TF_XLA_FLAGS"] = 'tf_xla_print_cluster_outputs=1'
+if not _PRE_TF_2_4_0:
+    tf_xla_flags = os.getenv('TF_XLA_FLAGS', '')
+    os.environ['TF_XLA_FLAGS'] = ' '.join([tf_xla_flags, '--tf_xla_enable_xla_devices'])
+    # Append TF xla enable xla devices flag because it's a breaking change in tf 2.4.
+    # More info : https://github.com/tensorflow/tensorflow/releases/tag/v2.4.0
 
 from absl import app
 
-import tensorflow as tf
 from tensorflow.python.framework.ops import disable_eager_execution
 
 from mask_rcnn.utils.logging_formatter import logging
