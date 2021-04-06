@@ -15,12 +15,6 @@ import random
 import numpy as np
 
 import torch
-
-import smdistributed.dataparallel.torch.distributed as herring
-if not herring.is_initialized():
-    herring.init_process_group()
-from smdistributed.dataparallel.torch.parallel import DistributedDataParallel as DDP
-
 from maskrcnn_benchmark.config import cfg
 from maskrcnn_benchmark.data import make_data_loader
 from maskrcnn_benchmark.solver import make_lr_scheduler
@@ -35,6 +29,11 @@ from maskrcnn_benchmark.utils.imports import import_file
 from maskrcnn_benchmark.utils.logger import setup_logger
 from maskrcnn_benchmark.utils.miscellaneous import mkdir
 from maskrcnn_benchmark.engine.tester import test
+
+import smdistributed.dataparallel.torch.distributed as herring
+if not herring.is_initialized():
+    herring.init_process_group()
+from smdistributed.dataparallel.torch.parallel import DistributedDataParallel as DDP
 
 
 # See if we can use apex.DistributedDataParallel instead of the torch default,
@@ -229,11 +228,11 @@ def main():
         nargs=argparse.REMAINDER,
     )
     parser.add_argument(
-            "--bucket-cap-mb",
-            dest="bucket_cap_mb",
-            help="specify bucket size for herring",
-            default=25,
-            type=int,
+        "--bucket-cap-mb",
+        dest="bucket_cap_mb",
+        help="specify bucket size for herring",
+        default=25,
+        type=int,
     )
     parser.add_argument(
         "--data-dir",
@@ -242,9 +241,18 @@ def main():
         type=str,
         default=None
     )
-
+    parser.add_argument(
+        "--dtype",
+        dest="dtype"
+    )
+    parser.add_argument(
+        "--num-steps",
+        dest = "num_steps"
+    )
 
     args = parser.parse_args()
+    keys = list(os.environ.keys())
+    args.data_dir = os.environ['SM_CHANNEL_TRAIN'] if 'SM_CHANNEL_TRAIN' in keys else args.data_dir
 
     # Set seed to reduce randomness
     random.seed(args.seed + herring.get_local_rank())
@@ -265,6 +273,10 @@ def main():
 
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
+    cfg.DTYPE = args.dtype
+    cfg.SOLVER.MAX_ITER = args.num_steps
+    cfg.SOLVER.IMS_PER_BATCH = num_gpus * 4
+    cfg.SOLVER.BASE_LR = num_gpus / 8 * 0.005
     cfg.freeze()
 
     output_dir = cfg.OUTPUT_DIR
