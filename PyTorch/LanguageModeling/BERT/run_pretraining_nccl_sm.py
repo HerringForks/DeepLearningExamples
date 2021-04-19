@@ -72,10 +72,8 @@ if __name__ == "__main__":
     seed = args.seed
     fp_16 = '--fp16' if args.fp16 else ''
     do_train = '--do_train' if args.do_train else ''
-    # main_path = '/opt/ml/code/DeepLearningExamples/PyTorch/LanguageModeling/BERT/run_pretraining.py'
     main_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'run_pretraining.py'))
     config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'bert_config.json'))
-    print(main_path)
 
     num_gpus = int(os.environ["SM_NUM_GPUS"])
     hosts = json.loads(os.environ["SM_HOSTS"])
