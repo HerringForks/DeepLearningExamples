@@ -74,6 +74,7 @@ if __name__ == "__main__":
     do_train = '--do_train' if args.do_train else ''
     # main_path = '/opt/ml/code/DeepLearningExamples/PyTorch/LanguageModeling/BERT/run_pretraining.py'
     main_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'run_pretraining.py'))
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'bert_config.json'))
     print(main_path)
 
     num_gpus = int(os.environ["SM_NUM_GPUS"])
@@ -87,7 +88,7 @@ if __name__ == "__main__":
 
     cmd = f"python -m torch.distributed.launch --nnodes={num_nodes} --node_rank={rank} --nproc_per_node={num_gpus} \
         --master_addr={hosts[0]} --master_port='12345' \
-    /shared/DeepLearningExamples/PyTorch/LanguageModeling/BERT/run_pretraining.py --input_dir {data_dir} --output_dir {work_dir} --config_file /opt/ml/code/DeepLearningExamples/PyTorch/LanguageModeling/BERT/bert_config.json --bert_model bert-large-uncased --train_batch_size {train_batch_size} --max_seq_length {max_seq_length} --max_predictions_per_seq {max_predictions_per_seq} --max_steps {max_steps} --warmup_proportion {warmup_proportion} --log_freq {log_freq} --num_steps_per_checkpoint {args.num_steps_per_checkpoint} --learning_rate {learning_rate} --seed {seed} {fp_16} {do_train} --json-summary {json_file}"
+    {main_path} --input_dir {data_dir} --output_dir {work_dir} --config_file {config_path} --bert_model bert-large-uncased --train_batch_size {train_batch_size} --max_seq_length {max_seq_length} --max_predictions_per_seq {max_predictions_per_seq} --max_steps {max_steps} --warmup_proportion {warmup_proportion} --log_freq {log_freq} --num_steps_per_checkpoint {args.num_steps_per_checkpoint} --learning_rate {learning_rate} --seed {seed} {fp_16} {do_train} --json-summary {json_file}"
 
     print (cmd)
     invoke_train(cmd)
