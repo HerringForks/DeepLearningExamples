@@ -9,7 +9,7 @@ cd $WORK_DIR
 git clone https://github.com/NVIDIA/apex; cd apex;
 python setup.py install --cuda_ext --cpp_ext
 
-cd DeepLearningExamples/PyTorch/Segmentation/MaskRCNN/pytorch/
+cd /shared/DeepLearningExamples/PyTorch/Segmentation/MaskRCNN/pytorch/
 python setup.py build develop
 
 wget https://dl.fbaipublicfiles.com/detectron/ImageNetPretrained/MSRA/R-50.pkl -P /root/.torch/models/
