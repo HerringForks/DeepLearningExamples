@@ -176,4 +176,6 @@ def define_hparams_flags():
         help='Enable XLA JIT Compiler at Inference'
     )
 
+    flags.DEFINE_integer('bucket_cap_mb', default=64, help='Set the bucket size in mb')
+
     return flags.FLAGS
