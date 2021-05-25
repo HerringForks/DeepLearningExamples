@@ -161,7 +161,6 @@ def train(cfg, local_rank, distributed, fp16, dllogger, data_dir, bucket_cap_mb)
         arguments,
         use_amp,
         cfg,
-        dllogger,
         per_iter_end_callback_fn=per_iter_callback_fn,
     )
 

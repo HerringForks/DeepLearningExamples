@@ -31,6 +31,10 @@ def is_main_process():
     return get_rank() == 0
 
 
+def is_local_main_process():
+    return dist.get_local_rank() == 0
+
+
 def synchronize():
     """
     Helper function to synchronize (barrier) among all processes when
