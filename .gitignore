@@ -1,3 +1,7 @@
 repos.cfg
 repos_init.cfg
 nvtool*
+__pycache__/
+*.so
+build/
+*egg-info/

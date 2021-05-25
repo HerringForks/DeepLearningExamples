@@ -11,6 +11,13 @@ import argparse
 import os
 import logging
 import functools
+import random
+import numpy as np
+
+import smdistributed.dataparallel.torch.distributed as dist
+if not dist.is_initialized():
+    dist.init_process_group()
+from smdistributed.dataparallel.torch.parallel import DistributedDataParallel as DDP
 
 import torch
 from maskrcnn_benchmark.config import cfg
@@ -28,8 +35,7 @@ from maskrcnn_benchmark.utils.logger import setup_logger
 from maskrcnn_benchmark.utils.miscellaneous import mkdir
 from maskrcnn_benchmark.engine.tester import test
 from maskrcnn_benchmark.utils.logger import format_step
-#from dllogger import Logger, StdOutBackend, JSONStreamBackend, Verbosity
-#import dllogger as DLLogger
+
 import dllogger
 from maskrcnn_benchmark.utils.logger import format_step
 
@@ -41,12 +47,8 @@ try:
 except ImportError:
     print('Use APEX for multi-precision via apex.amp')
     use_amp = False
-try:
-    from apex.parallel import DistributedDataParallel as DDP
-    use_apex_ddp = True
-except ImportError:
-    print('Use APEX for better performance')
-    use_apex_ddp = False
+
+use_apex_ddp = False
 
 def test_and_exchange_map(tester, model, distributed):
     results = tester(model=model, distributed=distributed)
@@ -90,7 +92,7 @@ def mlperf_test_early_exit(iteration, iters_per_epoch, tester, model, distribute
     return False
 
 
-def train(cfg, local_rank, distributed, fp16, dllogger):
+def train(cfg, local_rank, distributed, fp16, dllogger, data_dir, bucket_cap_mb):
     model = build_detection_model(cfg)
     device = torch.device(cfg.MODEL.DEVICE)
     model.to(device)
@@ -109,21 +111,15 @@ def train(cfg, local_rank, distributed, fp16, dllogger):
         model, optimizer = amp.initialize(model, optimizer, opt_level=amp_opt_level)
 
     if distributed:
-        if use_apex_ddp:
-            model = DDP(model, delay_allreduce=True)
-        else:
-            model = torch.nn.parallel.DistributedDataParallel(
-                model, device_ids=[local_rank], output_device=local_rank,
-                # this should be removed if we update BatchNorm stats
-                broadcast_buffers=False,
-            )
+        model = DDP(model, device_ids=[local_rank], broadcast_buffers=False, bucket_cap_mb=bucket_cap_mb)
 
     arguments = {}
     arguments["iteration"] = 0
 
     output_dir = cfg.OUTPUT_DIR
 
-    save_to_disk = get_rank() == 0
+    print(output_dir)
+    save_to_disk = dist.get_local_rank() == 0
     checkpointer = DetectronCheckpointer(
         cfg, model, optimizer, scheduler, output_dir, save_to_disk
     )
@@ -135,6 +131,7 @@ def train(cfg, local_rank, distributed, fp16, dllogger):
         is_train=True,
         is_distributed=distributed,
         start_iter=arguments["iteration"],
+        data_dir = data_dir
     )
 
     checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
@@ -210,7 +207,6 @@ def test_model(cfg, model, distributed, iters_per_epoch, dllogger):
 
 def main():
 
-
     parser = argparse.ArgumentParser(description="PyTorch Object Detection Training")
     parser.add_argument(
         "--config-file",
@@ -219,7 +215,7 @@ def main():
         help="path to config file",
         type=str,
     )
-    parser.add_argument("--local_rank", type=int, default=os.getenv('LOCAL_RANK', 0))
+    parser.add_argument("--local_rank", type=int, default=dist.get_local_rank())
     parser.add_argument("--max_steps", type=int, default=0, help="Override number of training steps in the config")
     parser.add_argument("--skip-test", dest="skip_test", help="Do not test the final model",
                         action="store_true",)
@@ -235,18 +231,44 @@ def main():
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument(
+        "--data-dir",
+        dest="data_dir",
+        help="Absolute path of dataset ",
+        type=str,
+        default=None
+    )
+    parser.add_argument(
+        "--bucket-cap-mb",
+        dest="bucket_cap_mb",
+        help="specify bucket size for smddp",
+        default=25,
+        type=int,
+    )
+    parser.add_argument(
+        "--seed",
+        help="manually set random seed for torch",
+        type=int,
+        default=987
+    )
     args = parser.parse_args()
     args.fp16 = args.fp16 or args.amp
+    print(args)
+    keys = list(os.environ.keys())
+    args.data_dir = os.environ[
+        'SM_CHANNEL_TRAIN'] if 'SM_CHANNEL_TRAIN' in keys else args.data_dir
     
-    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
+    # Set seed to reduce randomness
+    random.seed(args.seed + args.local_rank)
+    np.random.seed(args.seed + args.local_rank)
+    torch.manual_seed(args.seed + args.local_rank)
+    torch.cuda.manual_seed(args.seed + args.local_rank)
+
+    num_gpus = dist.get_world_size()
     args.distributed = num_gpus > 1
 
     if args.distributed:
         torch.cuda.set_device(args.local_rank)
-        torch.distributed.init_process_group(
-            backend="nccl", init_method="env://"
-        )
-        synchronize()
 
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
@@ -257,7 +279,10 @@ def main():
 
     if args.skip_checkpoint:
         cfg.SAVE_CHECKPOINT = False
-        
+    
+    cfg.SOLVER.IMS_PER_BATCH = num_gpus * 4
+    cfg.SOLVER.BASE_LR = num_gpus / 8 * 0.005
+    
     cfg.freeze()
 
     output_dir = cfg.OUTPUT_DIR
@@ -286,7 +311,7 @@ def main():
     else:
         fp16 = False
 
-    model, iters_per_epoch = train(cfg, args.local_rank, args.distributed, fp16, dllogger)
+    model, iters_per_epoch = train(cfg, args.local_rank, args.distributed, fp16, dllogger, args.data_dir, args.bucket_cap_mb)
 
     if not args.skip_test:
         if not cfg.PER_EPOCH_EVAL:
