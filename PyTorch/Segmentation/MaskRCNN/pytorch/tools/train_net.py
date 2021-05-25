@@ -214,13 +214,13 @@ def main():
         help="path to config file",
         type=str,
     )
-    parser.add_argument("--local_rank", type=int, default=dist.get_local_rank())
-    parser.add_argument("--max_steps", type=int, default=0, help="Override number of training steps in the config")
+    parser.add_argument("--local-rank", type=int, default=dist.get_local_rank())
+    parser.add_argument("--max-steps", type=int, default=0, help="Override number of training steps in the config")
     parser.add_argument("--skip-test", dest="skip_test", help="Do not test the final model",
                         action="store_true",)
     parser.add_argument("--fp16", help="Mixed precision training", action="store_true")
     parser.add_argument("--amp", help="Mixed precision training", action="store_true")
-    parser.add_argument('--skip_checkpoint', default=False, action='store_true', help="Whether to save checkpoints")
+    parser.add_argument('--skip-checkpoint', default=False, action='store_true', help="Whether to save checkpoints")
     parser.add_argument("--json-summary", help="Out file for DLLogger", default="dllogger.out",
                         type=str,
                         )
@@ -252,7 +252,7 @@ def main():
     )
     args = parser.parse_args()
     args.fp16 = args.fp16 or args.amp
-    print(args)
+
     keys = list(os.environ.keys())
     args.data_dir = os.environ[
         'SM_CHANNEL_TRAIN'] if 'SM_CHANNEL_TRAIN' in keys else args.data_dir

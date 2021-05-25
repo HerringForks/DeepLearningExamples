@@ -108,7 +108,7 @@ def do_train(
         batch_time = time.time() - end
         end = time.time()
 
-        if iteration % 20 == 0:
+        if iteration % 5 == 0:
             logger.info("iter: %d batch_time: %f" % (iteration, batch_time))
 
         if(iteration > 500):
@@ -117,13 +117,14 @@ def do_train(
             eta_seconds = meters.time.global_avg * (max_iter - iteration)
             eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
 
-            if iteration % 20 == 0 or iteration == max_iter:
+            if iteration % 5 == 0 or iteration == max_iter:
                 logger.info(
                     meters.delimiter.join(
                         [
                             "eta: {eta}",
                             "avg iteration time(s): {avg_iter:.2f}",
                             "avg iter/s: {iter_s:.2f}",
+                            "throughput: {speed:.2f} FPS",
                             "iter: {iter}",
                             "{meters}",
                             "lr: {lr:.6f}",
@@ -132,7 +133,8 @@ def do_train(
                     ).format(
                         eta=eta_string,
                         avg_iter=meters.time.global_avg,
-                        iter_s = 1.0/meters.time.global_avg,
+                        iter_s=1.0/meters.time.global_avg,
+                        speed=1.0/meters.time.global_avg*int(cfg.SOLVER.IMS_PER_BATCH),
                         iter=iteration,
                         meters=str(meters),
                         lr=optimizer.param_groups[0]["lr"],
@@ -154,11 +156,5 @@ def do_train(
 
     total_training_time = time.time() - start_training_time
     total_time_str = str(datetime.timedelta(seconds=total_training_time))
-    sec_per_iteration = total_training_time / max_iter
-    samples_per_sec = int(cfg.SOLVER.IMS_PER_BATCH) / sec_per_iteration
-    logger.info(
-        "Total training time: {} ({:.4f} s / it) throughput: {:.2f} FPS".format(
-            total_time_str, sec_per_iteration, samples_per_sec
-        )
-    )
+    logger.info("Total training time: {} ".format(total_time_str))
     logger.info("Final Loss at iteration {}: {}".format(max_iter, str(meters)))
