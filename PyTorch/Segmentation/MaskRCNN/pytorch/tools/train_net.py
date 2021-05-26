@@ -197,7 +197,7 @@ def test_model(cfg, model, distributed, iters_per_epoch, dllogger, data_dir):
         )
         synchronize()
         results.append(result)
-    if is_main_process(): 
+    if is_main_process():
         map_results, raw_results = results[0]
         bbox_map = map_results.results["bbox"]['AP']
         segm_map = map_results.results["segm"]['AP']
@@ -214,13 +214,13 @@ def main():
         help="path to config file",
         type=str,
     )
-    parser.add_argument("--local-rank", type=int, default=dist.get_local_rank())
-    parser.add_argument("--max-steps", type=int, default=0, help="Override number of training steps in the config")
+    parser.add_argument("--local_rank", type=int, default=dist.get_local_rank())
+    parser.add_argument("--max_steps", type=int, default=0, help="Override number of training steps in the config")
     parser.add_argument("--skip-test", dest="skip_test", help="Do not test the final model",
                         action="store_true",)
     parser.add_argument("--fp16", help="Mixed precision training", action="store_true")
     parser.add_argument("--amp", help="Mixed precision training", action="store_true")
-    parser.add_argument('--skip-checkpoint', default=False, action='store_true', help="Whether to save checkpoints")
+    parser.add_argument('--skip_checkpoint', default=False, action='store_true', help="Whether to save checkpoints")
     parser.add_argument("--json-summary", help="Out file for DLLogger", default="dllogger.out",
                         type=str,
                         )
@@ -248,7 +248,7 @@ def main():
         "--seed",
         help="manually set random seed for torch",
         type=int,
-        default=987
+        default=99
     )
     args = parser.parse_args()
     args.fp16 = args.fp16 or args.amp
@@ -256,7 +256,7 @@ def main():
     keys = list(os.environ.keys())
     args.data_dir = os.environ[
         'SM_CHANNEL_TRAIN'] if 'SM_CHANNEL_TRAIN' in keys else args.data_dir
-    
+
     # Set seed to reduce randomness
     random.seed(args.seed + args.local_rank)
     np.random.seed(args.seed + args.local_rank)
@@ -278,10 +278,10 @@ def main():
 
     if args.skip_checkpoint:
         cfg.SAVE_CHECKPOINT = False
-    
+
     cfg.SOLVER.IMS_PER_BATCH = num_gpus * 4
     cfg.SOLVER.BASE_LR = num_gpus / 8 * 0.005
-    
+
     cfg.freeze()
 
     output_dir = cfg.OUTPUT_DIR
@@ -304,7 +304,7 @@ def main():
         config_str = "\n" + cf.read()
 
     dllogger.log(step="PARAMETER", data={"config":cfg})
-    
+
     if args.fp16:
         fp16 = True
     else:
