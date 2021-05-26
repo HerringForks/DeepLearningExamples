@@ -58,13 +58,13 @@ def do_train(
     arguments,
     use_amp,
     cfg,
+    dllogger,
     per_iter_end_callback_fn=None,
 ):
     logger = logging.getLogger("maskrcnn_benchmark.trainer")
     logger.info("Start training")
     meters = MetricLogger(delimiter="  ")
     max_iter = len(data_loader)
-    print("max_iter: ", max_iter)
     start_iter = arguments["iteration"]
     model.train()
     start_training_time = time.time()

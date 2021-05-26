@@ -47,7 +47,12 @@ try:
 except ImportError:
     print('Use APEX for multi-precision via apex.amp')
     use_amp = False
-
+#try:
+#    from apex.parallel import DistributedDataParallel as DDP
+#    use_apex_ddp = True
+#except ImportError:
+#    print('Use APEX for better performance')
+#    use_apex_ddp = False
 use_apex_ddp = False
 
 def test_and_exchange_map(tester, model, distributed):
@@ -91,7 +96,6 @@ def mlperf_test_early_exit(iteration, iters_per_epoch, tester, model, distribute
 
     return False
 
-
 def train(cfg, local_rank, distributed, fp16, dllogger, data_dir, bucket_cap_mb):
     model = build_detection_model(cfg)
     device = torch.device(cfg.MODEL.DEVICE)
@@ -118,7 +122,6 @@ def train(cfg, local_rank, distributed, fp16, dllogger, data_dir, bucket_cap_mb)
 
     output_dir = cfg.OUTPUT_DIR
 
-    print(output_dir)
     save_to_disk = dist.get_local_rank() == 0
     checkpointer = DetectronCheckpointer(
         cfg, model, optimizer, scheduler, output_dir, save_to_disk
@@ -161,6 +164,7 @@ def train(cfg, local_rank, distributed, fp16, dllogger, data_dir, bucket_cap_mb)
         arguments,
         use_amp,
         cfg,
+        dllogger,
         per_iter_end_callback_fn=per_iter_callback_fn,
     )
 
@@ -201,10 +205,14 @@ def test_model(cfg, model, distributed, iters_per_epoch, dllogger, data_dir):
         map_results, raw_results = results[0]
         bbox_map = map_results.results["bbox"]['AP']
         segm_map = map_results.results["segm"]['AP']
-        dllogger.log(step=(cfg.SOLVER.MAX_ITER, cfg.SOLVER.MAX_ITER / iters_per_epoch,), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
-        dllogger.log(step=tuple(), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
+        # dllogger.log(step=(cfg.SOLVER.MAX_ITER, cfg.SOLVER.MAX_ITER / iters_per_epoch,), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
+        # dllogger.log(step=tuple(), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
+        # Printout for both EC2 and SageMaker
+        print("Evaluation bounded box accuracy - BBOX_mAP : {} %".format(bbox_map * 100))
+        print("Evaluation segmentation accuracy - MASK_mAP : {} %".format(segm_map * 100))
 
 def main():
+
 
     parser = argparse.ArgumentParser(description="PyTorch Object Detection Training")
     parser.add_argument(
