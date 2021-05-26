@@ -122,7 +122,7 @@ def train(cfg, local_rank, distributed, fp16, dllogger, data_dir, bucket_cap_mb)
 
     output_dir = cfg.OUTPUT_DIR
 
-    save_to_disk = dist.get_local_rank() == 0
+    save_to_disk = dist.get_rank() == 0
     checkpointer = DetectronCheckpointer(
         cfg, model, optimizer, scheduler, output_dir, save_to_disk
     )
