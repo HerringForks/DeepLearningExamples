@@ -6,13 +6,12 @@ import time
 
 import torch
 import torch.distributed as dist
-import smdistributed.dataparallel.torch.distributed as herring
-if not herring.is_initialized():
-    herring.init_process_group()
-#from maskrcnn_benchmark.utils.comm import get_world_size
+import smdistributed.dataparallel.torch.distributed as dist
+if not dist.is_initialized():
+    dist.init_process_group()
+from maskrcnn_benchmark.utils.comm import get_world_size, is_main_process
 from maskrcnn_benchmark.utils.metric_logger import MetricLogger
 
-from smdistributed.dataparallel.torch.distributed import get_world_size
 
 try:
     from apex import amp
@@ -108,7 +107,7 @@ def do_train(
         batch_time = time.time() - end
         end = time.time()
 
-        if iteration % 5 == 0:
+        if iteration % 5 == 0 and is_main_process():
             logger.info("iter: %d batch_time: %f" % (iteration, batch_time))
 
         if(iteration > 500):
@@ -117,7 +116,7 @@ def do_train(
             eta_seconds = meters.time.global_avg * (max_iter - iteration)
             eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
 
-            if iteration % 5 == 0 or iteration == max_iter:
+            if (iteration % 5 == 0 or iteration == max_iter) and is_main_process():
                 logger.info(
                     meters.delimiter.join(
                         [
@@ -153,8 +152,8 @@ def do_train(
             if early_exit:
                 break
 
-
-    total_training_time = time.time() - start_training_time
-    total_time_str = str(datetime.timedelta(seconds=total_training_time))
-    logger.info("Total training time: {} ".format(total_time_str))
-    logger.info("Final Loss at iteration {}: {}".format(max_iter, str(meters)))
+    if is_main_process():
+        total_training_time = time.time() - start_training_time
+        total_time_str = str(datetime.timedelta(seconds=total_training_time))
+        logger.info("Total training time: {} ".format(total_time_str))
+        logger.info("Final Loss at iteration {}: {}".format(max_iter, str(meters)))

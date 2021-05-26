@@ -61,13 +61,6 @@ def do_coco_evaluation(
             )
             results.update(res)
     logger.info(results)
-
-    map_results, raw_results = results[0]
-    bbox_map = map_results.results["bbox"]['AP']
-    segm_map = map_results.results["segm"]['AP']
-    logger.info("Predictions bounded box accuracy - BBOX_mAP : {} %".format(bbox_map * 100))
-    logger.info("Predictions segmentation accuracy - MASK_mAP : {} %".format(segm_map * 100))
-
     check_expected_results(results, expected_results, expected_results_sigma_tol)
     if output_folder:
         torch.save(results, os.path.join(output_folder, "coco_results.pth"))
