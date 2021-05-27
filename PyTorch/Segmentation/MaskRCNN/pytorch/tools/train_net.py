@@ -207,11 +207,8 @@ def test_model(cfg, model, distributed, iters_per_epoch, dllogger, data_dir):
         map_results, raw_results = results[0]
         bbox_map = map_results.results["bbox"]['AP']
         segm_map = map_results.results["segm"]['AP']
-        #dllogger.log(step=(cfg.SOLVER.MAX_ITER, cfg.SOLVER.MAX_ITER / iters_per_epoch,), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
-        #dllogger.log(step=tuple(), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
-        # Printout for both EC2 and SageMaker
-        print("Evaluation bounded box accuracy - BBOX_mAP : {} %".format(bbox_map * 100))
-        print("Evaluation segmentation accuracy - MASK_mAP : {} %".format(segm_map * 100))
+        dllogger.log(step=(cfg.SOLVER.MAX_ITER, cfg.SOLVER.MAX_ITER / iters_per_epoch,), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
+        dllogger.log(step=tuple(), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
 
 def main():
 
