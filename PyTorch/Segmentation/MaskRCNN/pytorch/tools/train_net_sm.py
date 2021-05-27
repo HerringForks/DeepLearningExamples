@@ -74,7 +74,8 @@ def main():
         f' --data-dir {data_dir}'
         f' --config-file {config_file}'
         f' --seed {args.seed}'
-        f' --skip-test'
+        f' {"--skip-test" if args.skip_test else ""}'
+        f' --max_steps {args.max_steps}'
         f' DTYPE float16'
         f' OUTPUT_DIR {work_dir}'
     )

@@ -172,7 +172,7 @@ def train(cfg, local_rank, distributed, fp16, dllogger, data_dir):
 
     return model, iters_per_epoch
 
-def test_model(cfg, model, distributed, iters_per_epoch, dllogger):
+def test_model(cfg, model, distributed, iters_per_epoch, dllogger, data_dir):
     if distributed:
         model = model.module
     torch.cuda.empty_cache()  # TODO check if it helps
@@ -186,7 +186,7 @@ def test_model(cfg, model, distributed, iters_per_epoch, dllogger):
             output_folder = os.path.join(cfg.OUTPUT_DIR, "inference", dataset_name)
             mkdir(output_folder)
             output_folders[idx] = output_folder
-    data_loaders_val = make_data_loader(cfg, is_train=False, is_distributed=distributed)
+    data_loaders_val = make_data_loader(cfg, is_train=False, is_distributed=distributed, data_dir=data_dir)
     results = []
     for output_folder, dataset_name, data_loader_val in zip(output_folders, dataset_names, data_loaders_val):
         result = inference(
@@ -207,8 +207,11 @@ def test_model(cfg, model, distributed, iters_per_epoch, dllogger):
         map_results, raw_results = results[0]
         bbox_map = map_results.results["bbox"]['AP']
         segm_map = map_results.results["segm"]['AP']
-        dllogger.log(step=(cfg.SOLVER.MAX_ITER, cfg.SOLVER.MAX_ITER / iters_per_epoch,), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
-        dllogger.log(step=tuple(), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
+        #dllogger.log(step=(cfg.SOLVER.MAX_ITER, cfg.SOLVER.MAX_ITER / iters_per_epoch,), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
+        #dllogger.log(step=tuple(), data={"BBOX_mAP": bbox_map, "MASK_mAP": segm_map})
+        # Printout for both EC2 and SageMaker
+        print("Evaluation bounded box accuracy - BBOX_mAP : {} %".format(bbox_map * 100))
+        print("Evaluation segmentation accuracy - MASK_mAP : {} %".format(segm_map * 100))
 
 def main():
 
@@ -313,7 +316,7 @@ def main():
 
     if not args.skip_test:
         if not cfg.PER_EPOCH_EVAL:
-            test_model(cfg, model, args.distributed, iters_per_epoch, dllogger)
+            test_model(cfg, model, args.distributed, iters_per_epoch, dllogger, args.data_dir)
 
 
 if __name__ == "__main__":
