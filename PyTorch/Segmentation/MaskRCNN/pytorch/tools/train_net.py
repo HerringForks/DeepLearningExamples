@@ -47,12 +47,7 @@ try:
 except ImportError:
     print('Use APEX for multi-precision via apex.amp')
     use_amp = False
-#try:
-#    from apex.parallel import DistributedDataParallel as DDP
-#    use_apex_ddp = True
-#except ImportError:
-#    print('Use APEX for better performance')
-#    use_apex_ddp = False
+
 use_apex_ddp = False
 
 def test_and_exchange_map(tester, model, distributed):
@@ -115,6 +110,8 @@ def train(cfg, local_rank, distributed, fp16, dllogger, data_dir, bucket_cap_mb)
         model, optimizer = amp.initialize(model, optimizer, opt_level=amp_opt_level)
 
     if distributed:
+        # Nvidia uses broadcast_buffers=False and said it will be removed if they update BatchNorm stats
+        # We will keep it false for consistency
         model = DDP(model, device_ids=[local_rank], broadcast_buffers=False, bucket_cap_mb=bucket_cap_mb)
 
     arguments = {}
@@ -255,6 +252,18 @@ def main():
         type=int,
         default=99
     )
+    parser.add_argument(
+        "--batch-size-per-gpu",
+        help="per gpu batch size",
+        type=int,
+        default=4
+    )
+    parser.add_argument(
+        "--lr-multiplier",
+        help="base lr multiplier",
+        type=float,
+        default=0.00625
+    )
     args = parser.parse_args()
     args.fp16 = args.fp16 or args.amp
 
@@ -284,8 +293,14 @@ def main():
     if args.skip_checkpoint:
         cfg.SAVE_CHECKPOINT = False
 
-    cfg.SOLVER.IMS_PER_BATCH = num_gpus * 4
-    cfg.SOLVER.BASE_LR = num_gpus / 8 * 0.005
+    # Use bs=4 and base_lr=0.04 for 8 nodes, override it so we can use same config files for diff settings
+    # Use bs=4 per GPU based on Nvidia recommendation in configs/e2e_mask_rcnn_R_50_FPN_1x_1GPU.yaml
+    cfg.SOLVER.IMS_PER_BATCH = num_gpus * args.batch_size_per_gpu
+    cfg.SOLVER.BASE_LR = num_gpus * args.lr_multiplier
+
+    if is_main_process():
+        print('Configuration to use')
+        print(cfg)
 
     cfg.freeze()
 
