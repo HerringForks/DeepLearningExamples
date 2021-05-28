@@ -57,7 +57,7 @@ def do_train(
     arguments,
     use_amp,
     cfg,
-    dllogger,
+    dllogger=None,
     per_iter_end_callback_fn=None,
 ):
     logger = logging.getLogger("maskrcnn_benchmark.trainer")
