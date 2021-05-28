@@ -262,7 +262,7 @@ def main():
         "--lr-multiplier",
         help="base lr multiplier",
         type=float,
-        default=0.00625
+        default=0.005
     )
     args = parser.parse_args()
     args.fp16 = args.fp16 or args.amp
@@ -293,8 +293,8 @@ def main():
     if args.skip_checkpoint:
         cfg.SAVE_CHECKPOINT = False
 
-    # Use bs=4 and base_lr=0.04 for 8 nodes, override it so we can use same config files for diff settings
-    # Use bs=4 per GPU based on Nvidia recommendation in configs/e2e_mask_rcnn_R_50_FPN_1x_1GPU.yaml
+    # Use bs=4 and base_lr=0.005 for 1 GPU, multiply it for multi-mode and override cfg to reuse same config file
+    # This is based on Nvidia recommendation in configs/e2e_mask_rcnn_R_50_FPN_1x_1GPU.yaml
     cfg.SOLVER.IMS_PER_BATCH = num_gpus * args.batch_size_per_gpu
     cfg.SOLVER.BASE_LR = num_gpus * args.lr_multiplier
 
