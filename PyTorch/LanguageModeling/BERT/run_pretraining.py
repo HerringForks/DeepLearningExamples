@@ -425,16 +425,40 @@ def prepare_model_and_optimizer(args, device):
 
     if args.local_rank != -1:
         if not args.allreduce_post_accumulation:
-            # model = DDP(model, message_size=250000000, gradient_predivide_factor=get_world_size())
+            # model = DDP(model, gradient_predivide_factor=get_world_size())
             model = DDP(model, bucket_cap_mb=args.bucket_cap_mb)
         else:
             flat_dist_call([param.data for param in model.parameters()], herring.broadcast, (0,) )
     elif args.n_gpu > 1:
         model = torch.nn.DataParallel(model)
 
+    
+    model = DDP(model, bucket_cap_mb=args.bucket_cap_mb)
     criterion = BertPretrainingCriterion(config.vocab_size)
 
     return model, optimizer, lr_scheduler, checkpoint, global_step, criterion
+
+def take_iteration_step(args, device, batch, model, criterion, optimizer, average_loss):
+    batch = [t.to(device) for t in batch]
+    input_ids, segment_ids, input_mask, masked_lm_labels, next_sentence_labels = batch
+    prediction_scores, seq_relationship_score = model(input_ids=input_ids, token_type_ids=segment_ids, attention_mask=input_mask)
+    loss = criterion(prediction_scores, seq_relationship_score, masked_lm_labels, next_sentence_labels)
+    if args.n_gpu > 1:
+        loss = loss.mean()  # mean() to average on multi-gpu.
+
+    divisor = args.gradient_accumulation_steps
+    if args.gradient_accumulation_steps > 1:
+        if not args.allreduce_post_accumulation:
+            # this division was merged into predivision
+            loss = loss / args.gradient_accumulation_steps
+            divisor = 1.0
+    if args.fp16:
+        with amp.scale_loss(loss, optimizer, delay_overflow_check=args.allreduce_post_accumulation) as scaled_loss:
+            scaled_loss.backward()
+    else:
+    	loss.backward()
+    average_loss += loss.item()
+    return average_loss, loss, divisor
 
 def take_optimizer_step(args, optimizer, model, overflow_buf, global_step):
 
@@ -592,32 +616,17 @@ def main():
 
                 if raw_train_start is None:
                     raw_train_start = time.time()
+                    
                 for step, batch in enumerate(train_iter):
 
                     training_steps += 1
-                    batch = [t.to(device) for t in batch]
-                    input_ids, segment_ids, input_mask, masked_lm_labels, next_sentence_labels = batch
-                    prediction_scores, seq_relationship_score = model(input_ids=input_ids, token_type_ids=segment_ids, attention_mask=input_mask)
-                    loss = criterion(prediction_scores, seq_relationship_score, masked_lm_labels, next_sentence_labels)
-                    if args.n_gpu > 1:
-                        loss = loss.mean()  # mean() to average on multi-gpu.
-
-                    divisor = args.gradient_accumulation_steps
-                    if args.gradient_accumulation_steps > 1:
-                        if not args.allreduce_post_accumulation:
-                            # this division was merged into predivision
-                            loss = loss / args.gradient_accumulation_steps
-                            divisor = 1.0
-                    if args.fp16:
-                        with amp.scale_loss(loss, optimizer, delay_overflow_check=args.allreduce_post_accumulation) as scaled_loss:
-                            scaled_loss.backward()
-                    else:
-                        loss.backward()
-                    average_loss += loss.item()
-
                     if training_steps % args.gradient_accumulation_steps == 0:
+                        average_loss, loss, divisor = take_iteration_step(args, device, batch, model, criterion, optimizer, average_loss)
                         lr_scheduler.step()  # learning rate warmup
                         global_step = take_optimizer_step(args, optimizer, model, overflow_buf, global_step)
+                    else:
+                        with model.no_sync():
+                            average_loss, loss, divisor = take_iteration_step(args, device, batch, model, criterion, optimizer, average_loss)
 
                     if global_step >= args.steps_this_run or timeout_sent:
                         train_time_raw = time.time() - raw_train_start
@@ -697,3 +706,4 @@ if __name__ == "__main__":
         dllogger.log(step=tuple(), data={"e2e_train_time": e2e_time, "training_sequences_per_second": training_perf,
                                          "final_loss": final_loss, "raw_train_time": train_time_raw })
     dllogger.flush()
+
