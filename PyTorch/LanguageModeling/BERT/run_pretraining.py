@@ -425,7 +425,7 @@ def prepare_model_and_optimizer(args, device):
 
     if args.local_rank != -1:
         if not args.allreduce_post_accumulation:
-            # model = DDP(model, gradient_predivide_factor=get_world_size())
+            # model = DDP(model, message_size=250000000, gradient_predivide_factor=get_world_size())
             model = DDP(model, bucket_cap_mb=args.bucket_cap_mb)
         else:
             flat_dist_call([param.data for param in model.parameters()], herring.broadcast, (0,) )
