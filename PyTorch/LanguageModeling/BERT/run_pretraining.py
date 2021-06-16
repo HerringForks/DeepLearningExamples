@@ -433,7 +433,6 @@ def prepare_model_and_optimizer(args, device):
         model = torch.nn.DataParallel(model)
 
     
-    model = DDP(model, bucket_cap_mb=args.bucket_cap_mb)
     criterion = BertPretrainingCriterion(config.vocab_size)
 
     return model, optimizer, lr_scheduler, checkpoint, global_step, criterion
